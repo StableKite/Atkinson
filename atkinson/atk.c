@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <string.h>
 #include <stdio.h>
@@ -7,16 +8,17 @@
     #define adderror( b, e ) ( ((b) < -(e)) ? 0x00 : ( ((0xFF - (b)) < (e)) ? 0xFF : (b + e) ) )
 #endif
 
-/* atk.atk()
+/* atk()
  *   Given image dimensions and a raw string of grayscale pixels, dithers the "image"
  */
 static PyObject *atk(PyObject *self, PyObject *args)
 {
-    int i, x, y, w, h, off, len, err;
+    Py_ssize_t i, x, y, w, h, off, len;
+    int err;
     unsigned char *pixels, threshold[256];
     unsigned char old, new;
     
-    if(!PyArg_ParseTuple(args, "iis#", &w, &h, &pixels, &len))
+    if(!PyArg_ParseTuple(args, "nny#", &w, &h, &pixels, &len))
     {
         /* fail unless I got two ints and a single string as input */
         return NULL;
@@ -25,6 +27,7 @@ static PyObject *atk(PyObject *self, PyObject *args)
     if(w * h != len)
     {
         // fail if the given dimensions don't seem to match the passed image
+        PyErr_SetString(PyExc_ValueError, "Image dimensions don't match data length");
         return NULL;
     }
     
@@ -86,16 +89,25 @@ static PyObject *atk(PyObject *self, PyObject *args)
         }
     }
     
-    return Py_BuildValue("s#", pixels, len);
+    return Py_BuildValue("y#", pixels, len);
 }
 
 /* map between python function name and C function pointer */
-static PyMethodDef AtkMethods[] = {
+static PyMethodDef AtkinsonMethods[] = {
     {"atk", atk, METH_VARARGS, "Dither an image"},
     {NULL, NULL, 0, NULL}
 };
 
-/* bootstrap function, called automatically when you 'import atk' */
-PyMODINIT_FUNC initatk(void) {
-    (void)Py_InitModule("atk", AtkMethods);
+static struct PyModuleDef atkinsonmodule = {
+    PyModuleDef_HEAD_INIT,
+    "atkinson",   /* name of module */
+    NULL,         /* module documentation, may be NULL */
+    -1,           /* size of per-interpreter state of the module,
+                     or -1 if the module keeps state in global variables. */
+    AtkinsonMethods
+};
+
+/* bootstrap function, called automatically when you 'import atkinson' */
+PyMODINIT_FUNC PyInit_atkinson(void) {
+    return PyModule_Create(&atkinsonmodule);
 }

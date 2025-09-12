@@ -1,5 +1,0 @@
-First:
-	python setup.py build
-
-Then:
-	cp build/lib.*/atk.so ./

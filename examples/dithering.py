@@ -8,17 +8,23 @@ Test dither() with a small 6x6 square
 'Ufw\\x88\\x99\\xaaUfw\\x88\\x99\\xaaUfw\\x88\\x99\\xaaUfw\\x88\\x99\\xaaUfw\\x88\\x99\\xaaUfw\\x88\\x99\\xaa'
 """
 
-import atk
+import atkinson
 import PIL.Image
 
+
 def dither(i):
-    """ Take an instance of single-channel PIL.Image, dither and return
     """
+    Take an instance of single-channel PIL.Image, dither and return
+    """
+
     assert i.mode == 'L'
-    s = atk.atk(i.size[0], i.size[1], i.tostring())
+    s = atkinson.atk(i.size[0], i.size[1], i.tostring())
     o = PIL.Image.fromstring('L', i.size, s)
+    
     return o
 
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     import doctest
     doctest.testmod()

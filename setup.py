@@ -1,9 +1,13 @@
-# totally swiped from http://www.python.org/doc/2.5.2/ext/building.html
-from distutils.core import setup, Extension
+from setuptools import setup, Extension, find_packages
 
-atk = Extension('atk', sources = ['atk.c'])
+atk_extension = Extension("atkinson.atkinson", sources = ["atkinson/atk.c"])
 
-setup (name = 'atk',
-       version = '1.0',
-       description = 'Stub function which takes a string and returns a string',
-       ext_modules = [atk])
+setup(
+    name = "atkinson",
+    version = "1.1",
+    description = "C implementation of Atkinson dithering",
+    ext_modules = [atk_extension],
+    packages = find_packages(),
+    package_data = {"atkinson": ["*.pyi"]},
+    setup_requires = ["setuptools"]
+)
