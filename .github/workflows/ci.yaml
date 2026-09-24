@@ -299,7 +299,6 @@ jobs:
           python -m pip install
           devpi-client
           devpi-tokens
-          "pypitoken>=6.0.1"
 
       - name: Publish
         env:
