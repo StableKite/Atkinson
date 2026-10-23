@@ -4,7 +4,7 @@ atk_extension = Extension("atkinson.atkinson", sources = ["atkinson/atk.c"])
 
 setup(
     name = "atkinson",
-    version = "1.1.1",
+    version = "1.1.2",
     description = "C implementation of Atkinson dithering",
     ext_modules = [atk_extension],
     packages = find_packages(),

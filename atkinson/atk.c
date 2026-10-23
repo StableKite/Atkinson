@@ -15,6 +15,7 @@ static PyObject *atk(PyObject *self, PyObject *args)
 {
     Py_ssize_t i, x, y, w, h, off, len;
     int err;
+    PyObject *result;
     unsigned char *pixels, threshold[256];
     unsigned char old, new;
     
@@ -24,13 +25,23 @@ static PyObject *atk(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    if(w * h != len)
+    if(w < 0 || h < 0 || (w != 0 && h > PY_SSIZE_T_MAX / w) || w * h != len)
     {
         // fail if the given dimensions don't seem to match the passed image
         PyErr_SetString(PyExc_ValueError, "Image dimensions don't match data length");
         return NULL;
     }
     
+    /* y# borrows immutable input bytes. Never dither into that memory: other
+       threads and Python's cached bytes hash may already be using it. The
+       result is private until returned, so its backing store can be changed. */
+    result = PyBytes_FromStringAndSize((const char *)pixels, len);
+    if (result == NULL) {
+        return NULL;
+    }
+    pixels = (unsigned char *)PyBytes_AS_STRING(result);
+
+    Py_BEGIN_ALLOW_THREADS
     // set up a basic threshold table to save some if/else later on
     for(i = 0; i < 128; i++) {
         threshold[i] = 0x00;
@@ -89,7 +100,8 @@ static PyObject *atk(PyObject *self, PyObject *args)
         }
     }
     
-    return Py_BuildValue("y#", pixels, len);
+    Py_END_ALLOW_THREADS
+    return result;
 }
 
 /* map between python function name and C function pointer */
@@ -98,16 +110,23 @@ static PyMethodDef AtkinsonMethods[] = {
     {NULL, NULL, 0, NULL}
 };
 
+static PyModuleDef_Slot atkinson_slots[] = {
+#if PY_VERSION_HEX >= 0x030D0000
+    {Py_mod_gil, Py_MOD_GIL_NOT_USED},
+#endif
+    {0, NULL}
+};
+
 static struct PyModuleDef atkinsonmodule = {
     PyModuleDef_HEAD_INIT,
     "atkinson",   /* name of module */
     NULL,         /* module documentation, may be NULL */
-    -1,           /* size of per-interpreter state of the module,
-                     or -1 if the module keeps state in global variables. */
-    AtkinsonMethods
+    0,            /* No mutable module-global state. */
+    AtkinsonMethods,
+    atkinson_slots
 };
 
 /* bootstrap function, called automatically when you 'import atkinson' */
 PyMODINIT_FUNC PyInit_atkinson(void) {
-    return PyModule_Create(&atkinsonmodule);
+    return PyModuleDef_Init(&atkinsonmodule);
 }
